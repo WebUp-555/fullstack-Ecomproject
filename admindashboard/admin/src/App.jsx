@@ -1,14 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
+import Dashboard from "./Pages/Dashboard.jsx";
+import Products from "./Pages/Product.jsx";
+import Users from "./Pages/User.jsx";
+import Orders from "./Pages/Orders.jsx";
+import AddProduct from "./Pages/AddProducts.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <><h1>Hello World</h1><p>This is a simple admin dashboard.</p></>
-  )
+    <Router>
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/orders" element={<Orders />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+
+
