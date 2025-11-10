@@ -4,7 +4,7 @@ import { loginUser } from '../Api/userApi';
 import ErrorMessage from '../Components/ErrorMessage';
 
 const SignIn = () => {
-  const [emailOrUsername, setEmailOrUsername] = useState(''); // Changed from email
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -12,23 +12,45 @@ const SignIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
-    setIsLoading(true); // Start loading
+    setError('');
+    setIsLoading(true);
 
     try {
-      const response = await loginUser(emailOrUsername, password); // Changed from email
+      const response = await loginUser(emailOrUsername, password);
       localStorage.setItem('token', response.data.accessToken);
       navigate('/');
     } catch (err) {
-      // Display the error message from the backend
-      const backendMessage =
-        err.response?.data?.message || // original axios response
-        err.data?.message ||           // interceptor attached data
-        err.message ||
-        'Something went wrong. Please try again.';
+      // Comprehensive error logging
+      console.log('=== Full Error Object ===');
+      console.log(err);
+      console.log('=== Error Response ===');
+      console.log(err.response);
+      console.log('=== Error Response Data ===');
+      console.log(err.response?.data);
+      console.log('=== Error Response Status ===');
+      console.log(err.response?.status);
+      
+      // Extract error message with all possible paths
+      let backendMessage = 'Something went wrong. Please try again.';
+      
+      if (err.response?.data) {
+        backendMessage = 
+          err.response.data.message ||           // ApiResponse message
+          err.response.data.error ||             // Error string
+          err.response.data.errors?.[0] ||       // Array of errors
+          err.response.data.data?.message ||     // Nested in data
+          err.message ||                          // Axios error
+          backendMessage;
+      } else {
+        backendMessage = err.message || backendMessage;
+      }
+      
+      console.log('=== Final Error Message ===');
+      console.log(backendMessage);
+      
       setError(backendMessage);
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
@@ -44,11 +66,12 @@ const SignIn = () => {
           <ErrorMessage message={error} />
           
           <input
-            type="text" // Changed from email to text
+            type="text"
             placeholder="Email or username"
-            value={emailOrUsername} // Changed from email
-            onChange={(e) => setEmailOrUsername(e.target.value)} // Changed from setEmail
+            value={emailOrUsername}
+            onChange={(e) => setEmailOrUsername(e.target.value)}
             className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none"
+            required
           />
           <input
             type="password"
@@ -56,6 +79,7 @@ const SignIn = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none"
+            required
           />
           <button
             type="submit"

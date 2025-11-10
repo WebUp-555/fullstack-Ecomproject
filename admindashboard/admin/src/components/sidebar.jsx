@@ -7,6 +7,7 @@ export default function Sidebar() {
       <ul className="space-y-4">
         <li><Link to="/" className="hover:text-gray-300">Dashboard</Link></li>
         <li><Link to="/products" className="hover:text-gray-300">Products</Link></li>
+        <li><Link to="/add-product" className="hover:text-gray-300">Add Product</Link></li>
         <li><Link to="/users" className="hover:text-gray-300">Users</Link></li>
         <li><Link to="/orders" className="hover:text-gray-300">Orders</Link></li>
       </ul>
