@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loginUser } from '../Api/userApi';
 import ErrorMessage from '../Components/ErrorMessage';
 
@@ -9,6 +9,33 @@ const SignIn = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Check if coming from logout
+    const isLogout = searchParams.get('logout');
+    
+    if (isLogout === 'true') {
+      console.log('Logout detected, clearing localStorage on main app');
+      localStorage.clear();
+      // Remove the query parameter
+      window.history.replaceState({}, '', '/signin');
+    }
+    
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    
+    // If already logged in and NOT logging out, redirect
+    if (token && user && isLogout !== 'true') {
+      if (user.role === 'admin') {
+        const encodedToken = encodeURIComponent(token);
+        const encodedUser = encodeURIComponent(JSON.stringify(user));
+        window.location.href = `http://localhost:5174#token=${encodedToken}&user=${encodedUser}`;
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [navigate, searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,36 +44,28 @@ const SignIn = () => {
 
     try {
       const response = await loginUser(emailOrUsername, password);
-      localStorage.setItem('token', response.data.accessToken);
-      navigate('/');
-    } catch (err) {
-      // Comprehensive error logging
-      console.log('=== Full Error Object ===');
-      console.log(err);
-      console.log('=== Error Response ===');
-      console.log(err.response);
-      console.log('=== Error Response Data ===');
-      console.log(err.response?.data);
-      console.log('=== Error Response Status ===');
-      console.log(err.response?.status);
       
-      // Extract error message with all possible paths
-      let backendMessage = 'Something went wrong. Please try again.';
+      const userData = response.data.user;
+      const accessToken = response.data.accessToken;
       
-      if (err.response?.data) {
-        backendMessage = 
-          err.response.data.message ||           // ApiResponse message
-          err.response.data.error ||             // Error string
-          err.response.data.errors?.[0] ||       // Array of errors
-          err.response.data.data?.message ||     // Nested in data
-          err.message ||                          // Axios error
-          backendMessage;
+      // Store in localStorage
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Redirect based on role
+      if (userData.role === 'admin') {
+        // Pass data via URL hash for admin dashboard
+        const encodedToken = encodeURIComponent(accessToken);
+        const encodedUser = encodeURIComponent(JSON.stringify(userData));
+        window.location.href = `http://localhost:5174#token=${encodedToken}&user=${encodedUser}`;
       } else {
-        backendMessage = err.message || backendMessage;
+        navigate('/', { replace: true });
       }
-      
-      console.log('=== Final Error Message ===');
-      console.log(backendMessage);
+    } catch (err) {
+      const backendMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Something went wrong. Please try again.';
       
       setError(backendMessage);
     } finally {
@@ -58,11 +77,9 @@ const SignIn = () => {
     <div className="flex items-center justify-center h-screen bg-black text-white px-4">
       <div className="bg-zinc-900 bg-opacity-80 p-12 md:p-16 rounded-md w-full max-w-[450px] shadow-xl">
         
-        {/* Centered Heading */}
         <h1 className="text-3xl font-bold mb-8 text-center text-white">Sign In</h1>
         
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Show error message if exists */}
           <ErrorMessage message={error} />
           
           <input
@@ -100,7 +117,6 @@ const SignIn = () => {
           <a href="#" className="hover:underline">Need help?</a>
         </div>
 
-        {/* Centered "Sign up now" Text */}
         <p className="mt-8 text-sm text-center text-gray-400">
           New to Japanee?{' '}
           <Link to="/signup" className="text-white hover:underline">
@@ -108,7 +124,6 @@ const SignIn = () => {
           </Link>
         </p>
 
-        {/* Centered reCAPTCHA Text */}
         <p className="text-xs text-center text-gray-500 mt-4 leading-5">
           This page is protected by Google reCAPTCHA to ensure you're not a bot.
         </p>

@@ -7,16 +7,17 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS setup — supports multiple origins and Postman testing
+// ✅ CORS setup — supports multiple origins
 const allowedOrigins = [
-  process.env.CORS_ORIGIN,       // e.g. http://localhost:5173
-  "http://localhost:5173",       // React dev server (optional)
-  "http://127.0.0.1:5173",       // sometimes needed for Vite
+  "http://localhost:5173",  // Main app
+  "http://localhost:5174",  // Admin dashboard
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman)
+    // Allow requests with no origin (like Postman) or from allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -31,10 +32,6 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-app.use((req, res, next) => {
-  console.log("Body received:", req.body);
-  next();
-});
 
 
 // ✅ Routes

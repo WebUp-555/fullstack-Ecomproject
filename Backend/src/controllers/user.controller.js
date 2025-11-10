@@ -71,12 +71,15 @@ const login = asyncHandler(async (req, res) => {
 
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid password"); // THIS WAS LINE 79 - Changed from throw new Error
+    throw new ApiError(401, "Invalid password");
   }
 
   const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
 
+  // ✅ Make sure you're NOT modifying the user object here
   const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+  console.log('Logged in user (should have ONE role):', loggedInUser);
 
   const options = {
     httpOnly: true,
@@ -91,7 +94,7 @@ const login = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user: loggedInUser,
+          user: loggedInUser, // ✅ This should have only ONE role field
           accessToken,
           refreshToken
         },
@@ -215,6 +218,27 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
+// Add this temporary debug endpoint
+const debugUser = asyncHandler(async (req, res) => {
+  const { email } = req.query;
+  
+  // Get raw document from MongoDB
+  const rawUser = await mongoose.connection.db
+    .collection('users')
+    .findOne({ email });
+  
+  console.log('Raw MongoDB document:', JSON.stringify(rawUser, null, 2));
+  
+  // Get via Mongoose
+  const user = await User.findOne({ email });
+  console.log('Mongoose document:', user.toObject());
+  
+  return res.json({
+    raw: rawUser,
+    mongoose: user
+  });
+});
+
 export {
   generateAccessTokenAndRefreshToken,
   register,
@@ -223,5 +247,6 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
-  updateAccountDetails
+  updateAccountDetails,
+  debugUser // Add this
 }

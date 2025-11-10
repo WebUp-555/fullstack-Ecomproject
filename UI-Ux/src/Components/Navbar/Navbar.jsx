@@ -7,6 +7,12 @@ import LogoutButton from "./LogoutButton.jsx";
 import "./Navbar.css";
 
 const Navbar = () => {
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/signin";
+  };
+
   return (
     <nav className="navbar bg-zinc-900">
       <div className="logo-container">
@@ -58,6 +64,7 @@ const Navbar = () => {
           </button>
         </Link>
         <LogoutButton />
+        <button onClick={handleLogout}>Logout</button>
       </div>
     </nav>
   );

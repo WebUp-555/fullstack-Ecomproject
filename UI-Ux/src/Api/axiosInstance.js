@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:9000/api", // changed to backend PORT=9000
+  baseURL: "http://localhost:8000/api", // ✅ Changed from 9000 to 8000
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -19,26 +19,18 @@ api.interceptors.request.use((request) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Log the full error response for debugging
-    console.log("API Error Details:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.response?.data?.message,
-    });
+    console.log("API Error Details:", error);
 
-    // Extract the error message from the backend response
     const errorMessage =
       error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
       "Something went wrong";
 
-    // Create a new error with the extracted message
     const enhancedError = new Error(errorMessage);
-    // Preserve the original error details
     enhancedError.status = error.response?.status;
     enhancedError.data = error.response?.data;
-    enhancedError.response = error.response; // preserve original axios response
+    enhancedError.response = error.response;
 
     return Promise.reject(enhancedError);
   }

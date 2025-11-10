@@ -4,7 +4,15 @@ import { Navigate } from "react-router-dom";
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/signin" />;
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  // No token - go to signin
+  if (!token || !user) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  // Has token - allow access
+  return children;
 };
 
 export default PrivateRoute;
