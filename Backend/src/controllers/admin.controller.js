@@ -3,7 +3,6 @@ import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { Product } from "../models/products.model.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { Category } from "../models/category.model.js";
 import mongoose from "mongoose";
 
@@ -102,51 +101,39 @@ export const addCategory = async (req, res) => {
 };
 
 // ✅ Add product (supports category name or ObjectId)
-export const addProduct = async (req, res) => {
+export const addProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category } = req.body;
-    const file = req.file;
+    let { name, description, category, price, stock } = req.body;
 
-    console.log("Body:", req.body);
-    console.log("File:", file);
-
-    if (!file) {
-      return res.status(400).json({ message: "Image file is required" });
-    }
-
-    // 🔹 Convert category name → ObjectId if needed
-    let categoryId = category;
-    if (!mongoose.Types.ObjectId.isValid(category)) {
-      const foundCategory = await Category.findOne({ name: category });
-      if (!foundCategory) {
-        return res.status(400).json({ message: "Invalid category name" });
+    // Resolve category if it's a name instead of an ObjectId
+    if (category && !mongoose.isValidObjectId(category)) {
+      const catDoc = await Category.findOne({ name: category }).lean();
+      if (!catDoc) {
+        return res.status(400).json({ success: false, message: 'Invalid category name' });
       }
-      categoryId = foundCategory._id;
+      category = catDoc._id;
     }
 
-    // 🔹 Upload image to Cloudinary
-    const imageUpload = await uploadOnCloudinary(file.path);
-    if (!imageUpload || !imageUpload.url) {
-      return res.status(500).json({ message: "Cloudinary upload failed" });
+    let image = null;
+    if (req.file?.secure_url) {
+      image = req.file.secure_url;
+    } else if (req.file?.filename) {
+      image = `/uploads/${req.file.filename}`;
     }
 
-    // 🔹 Save to DB
     const product = await Product.create({
       name,
       description,
-      price,
-      category: categoryId,
-      productImage: imageUpload.url,
+      category,
+      price: price ? Number(price) : undefined,
+      stock: stock ? Number(stock) : undefined,
+      image
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "✅ Product added successfully",
-      product,
-    });
-  } catch (error) {
-    console.error("❌ Error adding product:", error);
-    res.status(500).json({ message: "Error adding product", error: error.message });
+    return res.status(201).json({ success: true, product });
+  } catch (e) {
+    console.error('addProduct error:', e);
+    next(e);
   }
 };
 
@@ -160,12 +147,13 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // 🔹 Extract Cloudinary public_id from URL
-    const imageUrl = product.productImage;
-    const publicId = imageUrl.split("/").pop().split(".")[0];
-
-    // 🔹 Delete image from Cloudinary
-    await deleteFromCloudinary(publicId);
+    // If stored via Cloudinary secure_url in image or productImage field
+    const imageUrl = product.image || product.productImage;
+    if (imageUrl && /res\.cloudinary\.com/i.test(imageUrl)) {
+      // Attempt delete only for cloudinary hosted assets
+      const publicId = imageUrl.split("/").pop().split(".")[0];
+      try { await deleteFromCloudinary(publicId); } catch (_) { /* ignore */ }
+    }
 
     // 🔹 Delete product from DB
     await Product.findByIdAndDelete(id);
@@ -185,3 +173,32 @@ export const adminLogout = asyncHandler(async (req, res) => {
   res.clearCookie("accessToken");
   res.status(200).json({ success: true, message: "Admin logged out successfully" });
 });
+
+// List all products (public)
+export const getAllProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find()
+      .populate("category", "name slug")
+      .lean();
+    return res.json({ success: true, products });
+  } catch (e) { next(e); }
+};
+
+// Single product (public)
+export const getProductById = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate("category", "name slug")
+      .lean();
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    return res.json({ success: true, product });
+  } catch (e) { next(e); }
+};
+
+// List categories (public)
+export const getAllCategories = async (req, res, next) => {
+  try {
+    const categories = await Category.find().lean();
+    return res.json({ success: true, categories });
+  } catch (e) { next(e); }
+};

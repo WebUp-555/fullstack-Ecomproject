@@ -35,11 +35,13 @@ const Sidebar = () => {
   }, []);
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/products', label: 'Products', icon: '📦' },
-    { path: '/add-product', label: 'Add Product', icon: '➕' },
-    { path: '/users', label: 'Users', icon: '👥' },
-    { path: '/orders', label: 'Orders', icon: '🛒' },
+    { path: '/', label: 'Dashboard' },
+    { path: '/products', label: 'Products' },
+    { path: '/add-product', label: 'Add Product' },
+    { path: '/add-category', label: 'Add Category' }, // <-- Add this line
+    { path: '/users', label: 'Users'},
+    { path: '/orders', label: 'Orders' },
+  
   ];
 
   return (
@@ -87,7 +89,7 @@ const Sidebar = () => {
             gap: '8px'
           }}
         >
-          <span>🚪</span>
+          
           <span>Logout</span>
         </button>
       </div>

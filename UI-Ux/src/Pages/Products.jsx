@@ -1,73 +1,58 @@
-import React from "react";
-import productsData from "../Components/data/mock_tshirt_products.json";
-import { useNavigate, Link } from "react-router-dom";
-import { useCartStore } from "./cartStore";
+import React, { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { getProducts } from "../Api/catalogApi";
+import { buildProductImageUrl, debugImage } from "../utils/imageUrl";
 
-const Products = () => {
-  const addToCart = useCartStore((state) => state.addToCart);
-  const navigate = useNavigate();
+export default function Products() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [params] = useSearchParams();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        let list = await getProducts();
+        const q = (params.get("q") || "").toLowerCase();
+        const cat = (params.get("category") || "").toLowerCase();
+        if (q) list = list.filter((p) => (p.name || "").toLowerCase().includes(q));
+        if (cat)
+          list = list.filter(
+            (p) => (p.category?.slug || p.category?.name || "").toLowerCase() === cat
+          );
+        setItems(list);
+      } catch (e) {
+        setError(e?.response?.data?.message || e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [params]);
+
+  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-wrap justify-center gap-6 p-6">
-      {productsData.products.map((product) => {
-        const image = product.images.find((img) => img.is_default);
-        const variant = product.variants.find((v) => v.is_enabled);
-        const price = variant?.price;
-
-        const originalPrice = Math.round(price * 1.6);
-        const discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
-
-        const handleAdd = (e) => {
-          e.stopPropagation(); // 🔥 prevent parent click (optional)
-          addToCart({
-            id: product.id,
-            name: product.title,
-            image: image?.src,
-            price,
-            quantity: 1,
-            size: variant?.title,
-            color: variant?.color || "Default",
-          });
-          navigate("/cart");
-        };
-
+    <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {items.map((p) => {
+        const url = buildProductImageUrl(p);
+        if (!url) debugImage(p);
         return (
-         <div key={product.id} className="w-[220px] bg-zinc-800 text-black p-4 rounded-xl hover:scale-105 transition-transform duration-300 shadow hover:shadow-xl">
-  
-     {/* Wrap only the image and product info in Link */}
-     <Link to={`/product/${product.id}`}>
-     <img
-      src={image?.src}
-      alt={product.title}
-      className="w-full h-48 object-contain rounded-md mb-3 hover:brightness-110 hover:drop-shadow-[0_0_8px_#ff0000]"
-     />
-     <div className="text-left">
-      <h3 className="text-base font-semibold text-white mb-1">{product.title}</h3>
-      <p
-        className="text-sm text-gray-500 mb-2"
-        dangerouslySetInnerHTML={{ __html: product.description }}
-      />
-      <div className="flex items-center gap-2">
-        <span className="text-base font-bold text-white">₹{price}</span>
-        <span className="text-sm text-gray-400 line-through">₹{originalPrice}</span>
-        <span className="text-sm text-red-500 font-medium">({discountPercent}% OFF)</span>
-      </div>
-     </div>
-     </Link> {/* ✅ THIS was missing */}
-
-     {/* Button placed outside the Link */}
-     <button
-     onClick={handleAdd}
-     className="mt-3 bg-red-600 text-white hover:bg-red-500 font-bold py-1.5 px-3 rounded-md w-full transition duration-300"
-     >
-     Add to Cart
-     </button>
-
-  </div>
+          <Link key={p._id || p.id} to={`/product/${p._id || p.id}`} className="no-underline group">
+            <div className="bg-zinc-800 rounded-xl p-4 transition-all duration-300 hover:shadow-[0_0_20px_rgba(234,21,56,0.6)] hover:scale-105 hover:bg-zinc-750">
+              {url ? (
+                <img src={url} alt={p.name || "Product image"} loading="lazy" className="w-full h-56 object-contain rounded-lg mb-2 bg-zinc-900" />
+              ) : (
+                <div className="w-full h-56 flex items-center justify-center text-xs text-gray-400 bg-zinc-900 rounded-lg mb-2">
+                  No Image
+                </div>
+              )}
+              <div className="text-white text-sm group-hover:text-red-400 transition-colors duration-300">{p.name}</div>
+            </div>
+          </Link>
         );
       })}
     </div>
   );
-};
-
-export default Products;
+}

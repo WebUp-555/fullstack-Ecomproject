@@ -2,16 +2,14 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api", // ✅ Changed from 9000 to 8000
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1",
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true
 });
 
 // Add interceptor for debugging
 api.interceptors.request.use((request) => {
-  console.log("Request:", request);
+  console.log("FINAL URL:", (request.baseURL || "") + request.url);
   return request;
 });
 
@@ -20,7 +18,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.log("API Error Details:", error);
-
     const errorMessage =
       error.response?.data?.message ||
       error.response?.data?.error ||
@@ -31,7 +28,6 @@ api.interceptors.response.use(
     enhancedError.status = error.response?.status;
     enhancedError.data = error.response?.data;
     enhancedError.response = error.response;
-
     return Promise.reject(enhancedError);
   }
 );

@@ -1,136 +1,123 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import productsData from "../Components/data/mock_tshirt_products.json";
-import { useCartStore } from "./cartStore";
+import React, { useEffect, useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import { getProductById } from "../Api/catalogApi";
 
-const ProductDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const addToCart = useCartStore((state) => state.addToCart);
+// Build a stable origin (strip trailing /api/v1 if present)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, "");
 
-  // Fix: Ensure type match by converting id to number
-  const product = productsData.products.find((p) => p.id === id);
-
-  const [quantity, setQuantity] = useState(1);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-
-  // Set variant once product is found
-  useEffect(() => {
-    if (product) {
-      setSelectedVariant(product.variants[0]);
-    }
-  }, [product]);
-
-  // Optional console logs for debugging
-  console.log("URL param id:", id);
-  console.log("Matched product:", product);
-
-  // If product not found
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center text-xl">
-        ⚠ Product not found for ID: {id}
-      </div>
-    );
+function buildImageUrl(product) {
+  if (!product) return null;
+  // Prefer single image field; fallback to first in images[] if it's a plain string
+  let raw = product.image;
+  if (!raw && Array.isArray(product.images) && typeof product.images[0] === "string") {
+    raw = product.images[0];
   }
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw; // Already absolute (e.g. Cloudinary)
+  // Normalize leading slash
+  const clean = raw.startsWith("/") ? raw.slice(1) : raw;
+  try {
+    return new URL(clean, ORIGIN + "/").toString();
+  } catch (_) {
+    return ORIGIN + "/" + clean; // Fallback
+  }
+}
 
-  const image = product.images.find((img) => img.is_default);
+export default function ProductsDetails() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState(null);
+  const [notFound, setNotFound] = useState(false);
 
-  const handleVariantChange = (variant) => {
-    setSelectedVariant(variant);
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const p = await getProductById(id);
+        if (!p) {
+          setNotFound(true);
+        }
+        setProduct(p);
+      } catch (e) {
+        // Distinguish 404
+        if (e.status === 404) setNotFound(true);
+        setError(e?.response?.data?.message || e.message);
+      }
+    })();
+  }, [id]);
 
-  const handleAddToCart = () => {
-    addToCart({
-      id: product.id,
-      name: product.title,
-      image: image?.src,
-      price: selectedVariant?.price,
-      quantity,
-      size: selectedVariant?.title,
-      color: selectedVariant?.color || "Default",
-    });
-    navigate("/cart");
-  };
+  const imageUrl = useMemo(() => buildImageUrl(product), [product]);
+
+  if (error && !notFound) return <div className="p-6 text-red-500">{error}</div>;
+  if (notFound) return <div className="p-6 text-white">Product not found.</div>;
+  if (!product) return <div className="p-6 text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-6xl mx-auto bg-zinc-900 p-6 rounded-lg shadow-lg flex flex-col md:flex-row gap-10">
-        {/* Left: Image */}
-        <div className="md:w-1/2">
-          <img
-            src={`/${image?.src}`}
-            alt={product.title}
-            className="w-full h-[400px] object-contain rounded bg-white p-4"
-          />
-        </div>
-
-        {/* Right: Details */}
-        <div className="md:w-1/2">
-          <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
-          <div
-            className="text-gray-300 mb-4"
-            dangerouslySetInnerHTML={{ __html: product.description }}
-          />
-
-          <div className="mb-4">
-            <span className="font-semibold text-lg">Price: </span>
-            <span className="text-green-400 font-bold text-xl">
-              ₹{selectedVariant?.price}
-            </span>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* Image Section with Glow */}
+          <div className="bg-zinc-800 rounded-2xl p-6 shadow-[0_0_30px_rgba(234,21,56,0.3)] hover:shadow-[0_0_40px_rgba(234,21,56,0.5)] transition-all duration-500 hover:scale-[1.02]">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={product.name || "Product image"}
+                loading="lazy"
+                className="w-full h-auto max-h-[500px] object-contain rounded-xl bg-zinc-900"
+              />
+            ) : (
+              <div className="w-full h-96 flex items-center justify-center rounded-xl bg-zinc-900 text-gray-400 text-sm">
+                No image available
+              </div>
+            )}
           </div>
 
-          {/* Variant Selector */}
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2">Available Sizes & Colors:</h4>
-            <div className="flex flex-wrap gap-2">
-              {product.variants.map((variant) => (
-                <button
-                  key={variant.id}
-                  onClick={() => handleVariantChange(variant)}
-                  className={`px-3 py-1 border rounded-md text-sm transition-all duration-200 ${
-                    selectedVariant?.id === variant.id
-                      ? "bg-red-600 text-white border-red-400"
-                      : "bg-zinc-800 border-zinc-700 text-white"
-                  }`}
-                >
-                  {variant.title}
-                </button>
-              ))}
+          {/* Details Section */}
+          <div className="text-white space-y-6">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                {product.name}
+              </h1>
+              {product.category && (
+                <p className="text-red-400 text-sm mt-2 font-semibold tracking-wide">
+                  {product.category.name || product.category}
+                </p>
+              )}
             </div>
-          </div>
 
-          {/* Quantity Selector */}
-          <div className="mb-4">
-            <label className="block mb-1 font-semibold">Quantity:</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="bg-zinc-700 px-3 py-1 rounded"
-              >
-                -
-              </button>
-              <span>{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="bg-zinc-700 px-3 py-1 rounded"
-              >
-                +
-              </button>
+            {product.price && (
+              <div className="bg-zinc-800 rounded-xl p-4 inline-block shadow-lg">
+                <p className="text-3xl font-bold text-red-400">
+                  ₹{product.price.toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            <div className="bg-zinc-800/50 rounded-xl p-6 border border-zinc-700">
+              <h2 className="text-xl font-semibold mb-3 text-red-400">Description</h2>
+              <p className="text-gray-300 leading-relaxed">
+                {product.description || "No description available."}
+              </p>
             </div>
-          </div>
 
-          {/* Add to Cart Button */}
-          <button
-            onClick={handleAddToCart}
-            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6 rounded w-fit mt-4"
-          >
-            Add {quantity} to Cart
-          </button>
+            {product.stock !== undefined && (
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  product.stock > 0 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/50' 
+                    : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                }`}>
+                  {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock'}
+                </span>
+              </div>
+            )}
+
+            <button className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(234,21,56,0.6)] hover:scale-105 transition-all duration-300">
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ProductDetails;
+}

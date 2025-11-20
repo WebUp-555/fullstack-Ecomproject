@@ -1,12 +1,16 @@
 import React from "react";
 import { FaSignInAlt } from "react-icons/fa";
-import { Link } from "react-router-dom";
-
+import { Link, useLocation } from "react-router-dom";
 import LogoutButton from "./LogoutButton.jsx";
 
 import "./Navbar.css";
 
 const Navbar = () => {
+  // Categories removed from navbar per request.
+
+  const location = useLocation();
+  const isActive = (path) => location.pathname === path;
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -16,7 +20,7 @@ const Navbar = () => {
   return (
     <nav className="navbar bg-zinc-900">
       <div className="logo-container">
-        <Link to="">
+        <Link to="/" aria-label="Go to home">
           <button className="logo-btn">
             <img
               src="/logoo.png"
@@ -28,25 +32,13 @@ const Navbar = () => {
       </div>
 
       <ul className="nav-links">
+        <li><Link to="/" className={isActive("/") ? "active" : ""}>Home</Link></li>
+        <li><Link to="/products" className={isActive("/products") ? "active" : ""}>Products</Link></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#services">Service</a></li>
+        <li><a href="/#contact">Contact Us</a></li>
         <li>
-          <a href="/">Home</a>
-        </li>
-
-        <li>
-          <a href="/Products">Products</a>
-        </li>
-
-        <li>
-          <a href="/#about">About</a>
-        </li>
-        <li>
-          <a href="/#services">Service</a>
-        </li>
-        <li>
-          <a href="/#contact">Contact Us</a>
-        </li>
-        <li>
-          <Link to="/cart">
+          <Link to="/cart" aria-label="View cart">
             <img
               src="/Cart.png"
               alt="Cart"
@@ -54,8 +46,9 @@ const Navbar = () => {
             />
           </Link>
         </li>
+        {/* Categories intentionally not displayed */}
       </ul>
-
+      
       <div className="navbar-right">
         <Link to="/signin">
           <button className="sign-in-btn">
@@ -64,7 +57,6 @@ const Navbar = () => {
           </button>
         </Link>
         <LogoutButton />
-        <button onClick={handleLogout}>Logout</button>
       </div>
     </nav>
   );

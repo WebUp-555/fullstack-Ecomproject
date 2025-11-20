@@ -38,13 +38,7 @@ function AdaptiveHeight() {
   return (
     <div className="slider-container bg-gray-900 rounded-xl shadow-lg mx-auto my-6 px-2 md:px-10 max-w-5xl">
       <Slider {...settings}>
-        <div>
-          <img
-            src="/Images/t-shirt1.jpg"
-            alt="T-shirt 1"
-            className="w-full h-[220px] md:h-[400px] object-cover rounded-xl"
-          />
-        </div>
+        
         <div>
           <img
             src="/b1.png"

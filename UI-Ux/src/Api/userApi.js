@@ -2,10 +2,9 @@ import api from "./axiosInstance.js";
 
 export const registerUser = async (userData) => {
   try {
-    const res = await api.post("/v1/users/register", userData);
+    const res = await api.post("/users/register", userData); // removed /v1
     return res.data;
   } catch (error) {
-    // Log the full error structure
     console.log('Register Error Full:', error);
     console.log('Register Error Response:', error.response);
     console.log('Register Error Data:', error.response?.data);
@@ -20,10 +19,9 @@ export const loginUser = async (emailOrUsername, password) => {
       ? { email: emailOrUsername, password }
       : { username: emailOrUsername, password };
 
-    const response = await api.post("/v1/users/login", payload);
+    const response = await api.post("/users/login", payload, { withCredentials: true });
     return response.data;
   } catch (error) {
-    // Log the full error structure
     console.log('Login Error Full:', error);
     console.log('Login Error Response:', error.response);
     console.log('Login Error Data:', error.response?.data);
@@ -31,10 +29,9 @@ export const loginUser = async (emailOrUsername, password) => {
   }
 };
 
-// logout API call — backend clears cookies and refreshToken
 export const logoutUser = async () => {
   try {
-    const res = await api.post("/v1/users/logout", {}, { withCredentials: true });
+    const res = await api.post("/users/logout", {}, { withCredentials: true }); // removed /v1
     return res.data;
   } catch (error) {
     console.log('Logout Error:', error.response?.data);

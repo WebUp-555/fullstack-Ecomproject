@@ -7,6 +7,7 @@ import Products from "./Pages/Product.jsx";
 import Users from "./Pages/User.jsx";
 import Orders from "./Pages/Orders.jsx";
 import AddProduct from "./Pages/AddProducts.jsx";
+import AddCategory from './Pages/AddCategory';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -79,6 +80,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/add-category" element={<AddCategory />} />
             <Route path="/add-product" element={<AddProduct />} />
             <Route path="/users" element={<Users />} />
             <Route path="/orders" element={<Orders />} />

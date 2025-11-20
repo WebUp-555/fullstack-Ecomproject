@@ -31,15 +31,18 @@ app.use(cors({
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(express.static("public"));
+app.use('/uploads', express.static('uploads'));
 app.use(cookieParser());
 
 
 // ✅ Routes
 import adminRoutes from "./routes/admin.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import catalogRoutes from "./routes/catalog.routes.js";
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1", catalogRoutes);
 
 // ✅ Error Handler Middleware - MUST BE LAST
 app.use((err, req, res, next) => {
