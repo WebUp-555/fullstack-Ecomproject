@@ -218,6 +218,26 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
+const forgotPassword = asyncHandler(async(req, res) => {
+  const { email, newPassword } = req.body;
+  
+  if(!email || !newPassword) {
+    throw new ApiError(400, "Email and new password are required");
+  }
+  
+  const user = await User.findOne({ email });
+  if(!user) {
+    throw new ApiError(404, "User not found with this email");
+  }
+  
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password reset successfully"));
+});
+
 // Add this temporary debug endpoint
 const debugUser = asyncHandler(async (req, res) => {
   const { email } = req.query;
@@ -248,5 +268,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  forgotPassword,
   debugUser // Add this
 }

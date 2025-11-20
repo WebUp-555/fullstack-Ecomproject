@@ -9,6 +9,8 @@ import ProductDetails from './Pages/ProductsDetails';
 import CartPage from './Pages/cartPage';
 import PaymentPage from './Pages/PaymentPage';
 import PrivateRoute from './utils/PrivateRoute';
+import ForgotPassword from './Pages/ForgotPassword';
+import ChangePassword from './Pages/ChangePassword';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function AppContent() {
         {/* Public Routes - MUST BE FIRST */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         
         {/* Protected Routes */}
         <Route 

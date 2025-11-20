@@ -113,6 +113,12 @@ const SignIn = () => {
         <p className="text-xs text-center text-gray-500 mt-4 leading-5">
           This page is protected by Google reCAPTCHA to ensure you're not a bot.
         </p>
+
+        <div className="mt-4 text-center">
+          <Link to="/forgot-password" className="text-red-500 hover:text-red-400 text-sm">
+            Forgot Password?
+          </Link>
+        </div>
       </div>
     </div>
   );
