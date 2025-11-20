@@ -8,6 +8,7 @@ import Users from "./Pages/User.jsx";
 import Orders from "./Pages/Orders.jsx";
 import AddProduct from "./Pages/AddProducts.jsx";
 import AddCategory from './Pages/AddCategory';
+import UpdateProduct from './Pages/UpdateProduct';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -84,6 +85,7 @@ export default function App() {
             <Route path="/add-product" element={<AddProduct />} />
             <Route path="/users" element={<Users />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/updateproduct/:id" element={<UpdateProduct />} />
           </Routes>
         </div>
       </div>

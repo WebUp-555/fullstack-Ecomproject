@@ -34,7 +34,7 @@ export default function Products() {
   };
 
   const handleEdit = (id) => {
-    navigate(`/edit-product/${id}`);
+    navigate(`/updateproduct/${id}`);
   };
 
   const buildImageUrl = (product) => {
@@ -58,7 +58,7 @@ export default function Products() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-white">Products</h1>
         <button
-          onClick={() => navigate('/add-products')}
+          onClick={() => navigate('/add-product')}
           className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
         >
           + Add Product

@@ -21,20 +21,6 @@ const SignIn = () => {
       // Remove the query parameter
       window.history.replaceState({}, '', '/signin');
     }
-    
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    
-    // If already logged in and NOT logging out, redirect
-    if (token && user && isLogout !== 'true') {
-      if (user.role === 'admin') {
-        const encodedToken = encodeURIComponent(token);
-        const encodedUser = encodeURIComponent(JSON.stringify(user));
-        window.location.href = `http://localhost:5174#token=${encodedToken}&user=${encodedUser}`;
-      } else {
-        navigate('/', { replace: true });
-      }
-    }
   }, [navigate, searchParams]);
 
   const handleSubmit = async (e) => {

@@ -1,6 +1,7 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { addProduct, getAllCategories } from '../utils/api';
+import axios from 'axios';
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -12,9 +13,25 @@ export default function AddProduct() {
     stock: "",
     image: null
   });
+  const [categories, setCategories] = useState([]); // Initialize as empty array
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/categories`);
+        // Make sure to extract the array properly
+        setCategories(response.data?.categories || response.data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]); // Set to empty array on error
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,28 +49,13 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
-      const token = 
-        localStorage.getItem("accessToken") || 
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("accessToken") ||
-        sessionStorage.getItem("token");
-
-      console.log("Token found:", token ? "Yes" : "No");
-
-      if (!token) {
-        setError("Please login first to add products");
-        alert("⚠️ Please login first!");
-        navigate("/login");
-        return;
-      }
-
       const formData = new FormData();
       formData.append("name", product.name);
       formData.append("description", product.description);
       formData.append("price", product.price);
       formData.append("category", product.category);
       formData.append("stock", product.stock || "10"); // Add stock field
-      formData.append("file", product.image); // Backend expects 'file'
+      formData.append("image", product.image); // Backend expects 'image'
 
       // Debug: Log FormData contents
       console.log("FormData contents:");
@@ -61,18 +63,8 @@ export default function AddProduct() {
         console.log(pair[0] + ': ' + pair[1]);
       }
 
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/admin/addproduct",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-          }
-        }
-      );
-
-      console.log("Success response:", response.data);
+      const result = await addProduct(formData);
+      console.log('Product added:', result);
       setSuccess(true);
       alert("✅ Product Added Successfully!");
       
@@ -155,15 +147,20 @@ export default function AddProduct() {
           className="p-2 rounded bg-gray-800 text-white"
         />
         
-        <input
-          type="text"
+        <select
           name="category"
-          placeholder="Category (e.g., T-Shirt)"
           value={product.category}
           onChange={handleChange}
           required
           className="p-2 rounded bg-gray-800 text-white"
-        />
+        >
+          <option value="">Select Category</option>
+          {Array.isArray(categories) && categories.map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
 
         <input
           type="number"

@@ -202,3 +202,45 @@ export const getAllCategories = async (req, res, next) => {
     return res.json({ success: true, categories });
   } catch (e) { next(e); }
 };
+
+export const updateProduct = async (req, res, next) => {  
+  try {
+    const { id } = req.params;
+    let { name, description, category, price, stock } = req.body;
+    const updateData = {};
+
+    if (name) updateData.name = name;
+    if (description) updateData.description = description;
+    if (price) updateData.price = Number(price);
+    if (stock) updateData.stock = Number(stock);
+    if (category) {
+      if (!mongoose.isValidObjectId(category)) {
+        const catDoc = await Category.findOne({ name: category }).lean();
+        if (!catDoc) {
+          return res.status(400).json({ success: false, message: 'Invalid category name' });
+        }
+        updateData.category = catDoc._id;
+      } else {
+        updateData.category = category;
+      }
+    }
+    if (req.file?.secure_url) {
+      updateData.image = req.file.secure_url;
+    } else if (req.file?.filename) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true })
+      .populate("category", "name slug")
+      .lean();
+
+    if (!updatedProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    return res.json({ success: true, product: updatedProduct });
+  } catch (e) {
+    console.error('EditProduct error:', e);
+    next(e);
+  }
+};
