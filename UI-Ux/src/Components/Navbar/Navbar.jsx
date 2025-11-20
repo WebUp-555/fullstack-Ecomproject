@@ -75,6 +75,13 @@ const Navbar = () => {
             </button>
           </Link>
         )}
+        {isLoggedIn && (
+          <Link to="/change-password">
+            <button className="sign-in-btn" style={{ marginRight: "10px" }}>
+              Change Password
+            </button>
+          </Link>
+        )}
         <LogoutButton />
       </div>
     </nav>
