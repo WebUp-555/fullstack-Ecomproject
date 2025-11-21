@@ -21,3 +21,6 @@ dist-ssr/
 
 # Others
 *.local
+
+uploads/*
+!uploads/.gitkeep
