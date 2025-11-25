@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaSignInAlt } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
-import LogoutButton from "./LogoutButton.jsx";
+import Sidebar from "../Sidebar/Sidebar";
 
 import "./Navbar.css";
 
@@ -75,14 +75,7 @@ const Navbar = () => {
             </button>
           </Link>
         )}
-        {isLoggedIn && (
-          <Link to="/change-password">
-            <button className="sign-in-btn" style={{ marginRight: "10px" }}>
-              Change Password
-            </button>
-          </Link>
-        )}
-        <LogoutButton />
+        {isLoggedIn && <Sidebar />}
       </div>
     </nav>
   );

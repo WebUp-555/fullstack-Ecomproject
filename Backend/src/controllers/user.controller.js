@@ -104,6 +104,11 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
+  console.log('=== USER LOGOUT ===');
+  console.log('User:', req.user.username);
+  console.log('Email:', req.user.email);
+  console.log('==================');
+
   await User.findByIdAndUpdate(
     req.user._id,
     {

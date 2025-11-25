@@ -1,51 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect } from 'react';
+import useUserStore from '../store/userStore';
 
 export default function Users() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(null);
-  const [error, setError] = useState(null);
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const { users, loading, error, fetchUsers, deleteUser } = useUserStore();
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(response.data?.users || []);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      setError(err.response?.data?.message || 'Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchUsers]);
 
   const handleDelete = async (id, email) => {
     if (!window.confirm(`Are you sure you want to delete user "${email}"?`)) return;
     
-    setDeleting(id);
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/admin/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await deleteUser(id);
       alert('User deleted successfully!');
-      fetchUsers();
     } catch (err) {
       console.error('Delete failed:', err);
-      alert(err.response?.data?.message || 'Failed to delete user');
-    } finally {
-      setDeleting(null);
+      alert('Failed to delete user');
     }
   };
 
@@ -127,11 +98,11 @@ export default function Users() {
               <div className="flex gap-2 pt-4 border-t border-zinc-700">
                 <button
                   onClick={() => handleDelete(user._id, user.email)}
-                  disabled={deleting === user._id || user.role === 'admin'}
+                  disabled={loading || user.role === 'admin'}
                   className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   title={user.role === 'admin' ? 'Cannot delete admin users' : 'Delete user'}
                 >
-                  {deleting === user._id ? 'Deleting...' : 'Delete'}
+                  Delete
                 </button>
                 <button
                   className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"

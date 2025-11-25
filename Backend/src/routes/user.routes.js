@@ -5,7 +5,7 @@ const router=Router()
 
 router.route("/register").post(register)
 router.route("/login").post(login)
-router.route("/logout").post(logout)
+router.route("/logout").post(verifyJWT, logout);
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT,changeCurrentPassword)
 router.route("/current-user").get(verifyJWT,getCurrentUser)
