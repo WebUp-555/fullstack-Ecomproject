@@ -34,17 +34,17 @@ const SignIn = () => {
       const userData = response.data.user;
       const accessToken = response.data.accessToken;
       
-      // Store in localStorage
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
       // Redirect based on role
       if (userData.role === 'admin') {
+        // DON'T store in main app's localStorage
         // Pass data via URL hash for admin dashboard
         const encodedToken = encodeURIComponent(accessToken);
         const encodedUser = encodeURIComponent(JSON.stringify(userData));
         window.location.href = `http://localhost:5174#token=${encodedToken}&user=${encodedUser}`;
       } else {
+        // Only store for regular users
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('user', JSON.stringify(userData));
         navigate('/', { replace: true });
       }
     } catch (err) {
