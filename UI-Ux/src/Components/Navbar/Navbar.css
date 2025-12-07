@@ -10,7 +10,6 @@ nav {
   padding-right: 25px;
 }
 
-
 /* Rest of your styles stay the same... */
 .nav-links {
   list-style: none;
@@ -75,11 +74,11 @@ nav {
   background: linear-gradient(135deg,#121214 0%,#181a1d 60%,#121214 100%);
   border-right: 1px solid #202225;
   box-shadow: 4px 0 16px rgba(0,0,0,0.55);
-  padding: 70px 22px 28px; /* account for navbar height */
+  padding: 70px 22px 28px;
   transform: translateX(-102%);
   opacity: 0;
   transition: transform .32s cubic-bezier(.4,.08,.2,1), opacity .25s ease;
-  z-index: 950; /* below navbar (1000) but above overlay */
+  z-index: 950;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #2a2d30 transparent;
@@ -110,13 +109,6 @@ nav {
   to { opacity: 1; }
 }
 
-/* Responsive: narrower drawer on very small screens */
-@media (max-width: 520px) {
-  .categories-drawer { width: 230px; padding: 65px 18px 24px; }
-  .drawer-title { font-size: 16px; }
-  .drawer-list li a { font-size: 14px; padding:7px 9px; }
-}
-
 .sign-in-btn {
   display: flex;
   align-items: center;
@@ -134,6 +126,7 @@ nav {
 .sign-in-btn:hover {
   background-color: #ff4e5e;
 }
+
 .logo-image {
   height: 60px;
   width: auto;
@@ -148,6 +141,7 @@ nav {
 .logo-btn{
   cursor: pointer;
 }
+
 .cart-icon {
   width: 35px;
   height: 35px;
@@ -161,11 +155,188 @@ nav {
 .cart-icon:hover {
   transform: scale(1.1);
 }
+
 @keyframes float {
   0%, 100% {
     transform: translateY(0);
   }
   50% {
     transform: translateY(-5px);
+  }
+}
+
+/* ============ RESPONSIVE STYLES ============ */
+
+/* Large screens (1200px and above) */
+@media (max-width: 1400px) {
+  .nav-links {
+    padding-left: 25%;
+    gap: 25px;
+  }
+}
+
+/* Medium-Large screens */
+@media (max-width: 1200px) {
+  .nav-links {
+    padding-left: 15%;
+    gap: 20px;
+    font-size: 18px;
+  }
+  
+  nav {
+    padding-right: 20px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 992px) {
+  .nav-links {
+    padding-left: 10%;
+    gap: 15px;
+    font-size: 16px;
+  }
+  
+  .logo-image {
+    width: 160px;
+    height: 35px;
+    padding-left: 15px;
+  }
+  
+  .sign-in-btn {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+  
+  .cart-icon {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Small tablets */
+@media (max-width: 768px) {
+  nav {
+    padding: 7px 15px;
+  }
+  
+  .nav-links {
+    padding-left: 5%;
+    gap: 12px;
+    font-size: 14px;
+  }
+  
+  .logo-image {
+    width: 140px;
+    height: 30px;
+    padding-left: 10px;
+  }
+  
+  .sign-in-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+  
+  .cart-icon {
+    width: 28px;
+    height: 28px;
+    padding-right: 5px;
+  }
+  
+  .categories-trigger {
+    font-size: 14px;
+    padding: 3px 5px;
+  }
+}
+
+/* Mobile landscape */
+@media (max-width: 640px) {
+  .nav-links {
+    padding-left: 2%;
+    gap: 10px;
+    font-size: 13px;
+  }
+  
+  .logo-image {
+    width: 120px;
+    height: 28px;
+    padding-left: 8px;
+  }
+  
+  .sign-in-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Mobile portrait */
+@media (max-width: 520px) {
+  nav {
+    padding: 5px 10px;
+    flex-wrap: nowrap;
+  }
+  
+  .nav-links {
+    padding-left: 0;
+    gap: 8px;
+    font-size: 12px;
+  }
+  
+  .logo-image {
+    width: 100px;
+    height: 25px;
+    padding-left: 5px;
+  }
+  
+  .sign-in-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  
+  .cart-icon {
+    width: 25px;
+    height: 25px;
+    padding-right: 3px;
+  }
+  
+  .categories-drawer { 
+    width: 230px; 
+    padding: 65px 18px 24px; 
+  }
+  
+  .drawer-title { 
+    font-size: 16px; 
+  }
+  
+  .drawer-list li a { 
+    font-size: 14px; 
+    padding: 7px 9px; 
+  }
+}
+
+/* Extra small mobile */
+@media (max-width: 375px) {
+  .nav-links {
+    gap: 6px;
+    font-size: 11px;
+  }
+  
+  .logo-image {
+    width: 90px;
+    height: 22px;
+  }
+  
+  .sign-in-btn {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+  
+  .cart-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .categories-drawer {
+    width: 200px;
   }
 }
