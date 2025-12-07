@@ -98,6 +98,7 @@ export default function ChangePassword() {
               name="oldPassword"
               value={formData.oldPassword}
               onChange={handleChange}
+              autoComplete="current-password"
               required
               className="w-full px-4 py-3 bg-zinc-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="Enter current password"
@@ -111,6 +112,7 @@ export default function ChangePassword() {
               name="newPassword"
               value={formData.newPassword}
               onChange={handleChange}
+              autoComplete="new-password"
               required
               className="w-full px-4 py-3 bg-zinc-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="Enter new password"
@@ -124,6 +126,7 @@ export default function ChangePassword() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
+              autoComplete="new-password"
               required
               className="w-full px-4 py-3 bg-zinc-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="Confirm new password"

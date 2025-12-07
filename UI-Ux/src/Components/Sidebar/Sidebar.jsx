@@ -4,6 +4,7 @@ import './Sidebar.css';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   const toggleSidebar = () => {
@@ -16,19 +17,33 @@ const Sidebar = () => {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       const response = await fetch('http://localhost:8000/api/v1/users/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (response.ok) {
+      // Log out regardless of server response
+      if (response.ok || response.status === 401) {
         localStorage.removeItem('user');
+        localStorage.removeItem('token'); // Also remove token if stored
         navigate('/signin');
         setIsOpen(false);
+      } else {
+        alert('Logout failed. Please try again.');
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Logout error:', error);
+      // Force logout on error
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      navigate('/signin');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -51,9 +66,9 @@ const Sidebar = () => {
               <span className="icon">🔒</span>
               Change Password
             </li>
-            <li onClick={handleLogout}>
+            <li onClick={handleLogout} style={{ opacity: isLoggingOut ? 0.6 : 1, pointerEvents: isLoggingOut ? 'none' : 'auto' }}>
               <span className="icon">🚪</span>
-              Logout
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </li>
           </ul>
         </div>

@@ -7,6 +7,7 @@ export default function Products() {
   const { products, fetchProducts, deleteProduct } = useProductStore();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadProducts();
@@ -45,6 +46,11 @@ export default function Products() {
     return raw.startsWith('/') ? base + raw : base + '/' + raw;
   };
 
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product._id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -65,7 +71,22 @@ export default function Products() {
         </button>
       </div>
 
-      {products.length === 0 ? (
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by product name or ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-3 bg-zinc-800 text-white border border-zinc-700 rounded-lg focus:outline-none focus:border-red-600 transition"
+        />
+      </div>
+
+      {filteredProducts.length === 0 && searchTerm ? (
+        <div className="text-center py-12">
+          <p className="text-gray-400 text-lg">No products match your search</p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 text-lg mb-4">No products found</p>
           <button
@@ -77,7 +98,7 @@ export default function Products() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const imageUrl = buildImageUrl(product);
             return (
               <div

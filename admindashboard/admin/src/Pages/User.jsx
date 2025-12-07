@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useUserStore from '../store/userStore';
 
 export default function Users() {
   const { users, loading, error, fetchUsers, deleteUser } = useUserStore();
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -19,6 +20,13 @@ export default function Users() {
       alert('Failed to delete user');
     }
   };
+
+  const filteredUsers = users.filter(user =>
+    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user._id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -43,13 +51,28 @@ export default function Users() {
         <div className="text-gray-400">Total Users: {users.length}</div>
       </div>
 
-      {users.length === 0 ? (
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by name, email, username, or ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-3 bg-zinc-800 text-white border border-zinc-700 rounded-lg focus:outline-none focus:border-red-600 transition"
+        />
+      </div>
+
+      {filteredUsers.length === 0 && searchTerm ? (
+        <div className="text-center py-12">
+          <p className="text-gray-400 text-lg">No users match your search</p>
+        </div>
+      ) : filteredUsers.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 text-lg">No users found</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div
               key={user._id}
               className="bg-zinc-800 rounded-xl p-6 shadow-lg hover:shadow-[0_0_20px_rgba(234,21,56,0.4)] transition-all duration-300 hover:scale-105"

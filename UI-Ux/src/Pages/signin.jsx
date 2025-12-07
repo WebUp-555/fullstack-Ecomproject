@@ -73,16 +73,18 @@ const SignIn = () => {
             placeholder="Email or username"
             value={emailOrUsername}
             onChange={(e) => setEmailOrUsername(e.target.value)}
+            autoComplete="username"
             className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none"
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
+          <input 
+            placeholder="Password" 
+            type="password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none"
-            required
+            autoComplete="current-password"
+            className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none" 
+            required 
           />
           <button
             type="submit"
