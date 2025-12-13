@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './Components/Navbar/Navbar';
 import Home from './Pages/Home';
-import SignIn from './Pages/signin';
+import SignIn from './Pages/SignIn';
 import SignUp from './Pages/signup';
 import Products from './Pages/Products';
 import ProductDetails from './Pages/ProductsDetails';
@@ -11,8 +11,15 @@ import PaymentPage from './Pages/PaymentPage';
 import PrivateRoute from './utils/PrivateRoute';
 import ForgotPassword from './Pages/ForgotPassword';
 import ChangePassword from './Pages/ChangePassword';
+import { useCartStore } from './Pages/cartStore';
 
 function App() {
+  const initializeCart = useCartStore((state) => state.initializeCart);
+
+  useEffect(() => {
+    initializeCart();
+  }, [initializeCart]);
+
   return (
     <BrowserRouter>
       <AppContent />
