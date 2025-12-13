@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getProductById } from "../Api/catalogApi";
+import { useCartStore } from "./cartStore";
 
 // Build a stable origin (strip trailing /api/v1 if present)
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
@@ -26,9 +27,15 @@ function buildImageUrl(product) {
 
 export default function ProductsDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const { addToCart, error: cartError, clearError } = useCartStore();
 
   useEffect(() => {
     (async () => {
@@ -46,7 +53,50 @@ export default function ProductsDetails() {
     })();
   }, [id]);
 
+  useEffect(() => {
+    if (cartError) {
+      const timer = setTimeout(() => clearError(), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [cartError, clearError]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   const imageUrl = useMemo(() => buildImageUrl(product), [product]);
+
+  const handleAddToCart = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin?redirect=/products/' + id);
+      return;
+    }
+
+    if (!product || product.stock < 1) return;
+
+    setAddingToCart(true);
+    try {
+      await addToCart(product, quantity);
+      setSuccessMessage("Product added to cart successfully!");
+      setQuantity(1); // Reset quantity
+    } catch (err) {
+      // Error handled by store
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleQuantityChange = (delta) => {
+    const newQty = quantity + delta;
+    if (newQty >= 1 && newQty <= (product?.stock || 0)) {
+      setQuantity(newQty);
+    }
+  };
 
   if (error && !notFound) return <div className="p-6 text-red-500">{error}</div>;
   if (notFound) return <div className="p-6 text-white">Product not found.</div>;
@@ -55,6 +105,20 @@ export default function ProductsDetails() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6">
       <div className="max-w-6xl mx-auto">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-4 bg-green-900/50 border border-green-600 text-green-400 px-4 py-3 rounded">
+            {successMessage}
+          </div>
+        )}
+
+        {/* Cart Error Message */}
+        {cartError && (
+          <div className="mb-4 bg-red-900/50 border border-red-600 text-red-400 px-4 py-3 rounded">
+            {cartError}
+          </div>
+        )}
+
         <div className="grid md:grid-cols-2 gap-8 items-start">
           {/* Image Section with Glow */}
           <div className="bg-zinc-800 rounded-2xl p-6 shadow-[0_0_30px_rgba(234,21,56,0.3)] hover:shadow-[0_0_40px_rgba(234,21,56,0.5)] transition-all duration-500 hover:scale-[1.02]">
@@ -112,8 +176,36 @@ export default function ProductsDetails() {
               </div>
             )}
 
-            <button className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(234,21,56,0.6)] hover:scale-105 transition-all duration-300">
-              Add to Cart
+            {/* Quantity Selector */}
+            {product.stock > 0 && (
+              <div className="flex items-center gap-4">
+                <span className="text-gray-300">Quantity:</span>
+                <div className="flex items-center gap-3 bg-zinc-800 rounded-lg p-2">
+                  <button
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= 1}
+                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    −
+                  </button>
+                  <span className="px-4 font-semibold">{quantity}</span>
+                  <button
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={quantity >= product.stock}
+                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleAddToCart}
+              disabled={product.stock < 1 || addingToCart}
+              className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(234,21,56,0.6)] hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              {addingToCart ? 'Adding...' : product.stock < 1 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
         </div>

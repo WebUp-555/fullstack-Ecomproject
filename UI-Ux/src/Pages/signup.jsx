@@ -58,6 +58,8 @@ const SignUp = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+            title="Please enter a valid Gmail address (@gmail.com)"
             className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded text-white placeholder-gray-400 focus:outline-none"
             required
           />

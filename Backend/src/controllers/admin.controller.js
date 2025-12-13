@@ -215,13 +215,14 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
 
 export const addToCart = asyncHandler(async (req, res) => {
-  // Adds a product to the authenticated user's cart.
-  // - Validates input and stock
-  // - Creates cart if missing, else merges quantity
   const userId = req.user?._id;
-  let { productId, quantity } = req.body;
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
 
+  let { productId, quantity } = req.body;
   quantity = Number(quantity) || 0;
+  
   if (!productId || quantity < 1) {
     throw new ApiError(400, "Product ID and valid quantity are required");
   }
@@ -231,11 +232,21 @@ export const addToCart = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found");
   }
 
-  if (product.stock < quantity) {
-    throw new ApiError(400, "Insufficient stock available");
+  let cart = await Cart.findOne({ user: userId });
+  let existingQuantity = 0;
+
+  if (cart) {
+    const existingItem = cart.items.find((item) => item.product.toString() === productId);
+    if (existingItem) {
+      existingQuantity = existingItem.quantity;
+    }
   }
 
-  let cart = await Cart.findOne({ user: userId });
+  // Check total quantity against stock
+  if (product.stock < (quantity + existingQuantity)) {
+    throw new ApiError(400, `Insufficient stock. Available: ${product.stock}, Requested: ${quantity + existingQuantity}`);
+  }
+
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [{ product: productId, quantity }] });
   } else {
@@ -245,43 +256,65 @@ export const addToCart = asyncHandler(async (req, res) => {
     } else {
       cart.items.push({ product: productId, quantity });
     }
+    await cart.save();
   }
 
-  await cart.save();
   res.status(200).json({ success: true, message: "Product added to cart successfully", cart });
 });
 
 export const removeFromCart = asyncHandler(async (req, res) => {
-  // Removes a specific product from the authenticated user's cart.
-  // - Requires productId
-  // - No-op if item not present; persists updated cart
   const userId = req.user?._id;
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
   const { productId } = req.body;
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
   }
+
   const cart = await Cart.findOne({ user: userId });
   if (!cart) {
     throw new ApiError(404, "Cart not found");
   }
+
+  const initialLength = cart.items.length;
   cart.items = cart.items.filter((item) => item.product.toString() !== productId);
+
+  if (cart.items.length === initialLength) {
+    throw new ApiError(404, "Product not found in cart");
+  }
+
   await cart.save();
   res.status(200).json({ success: true, message: "Product removed from cart successfully", cart });
 });
 
 export const getCart = asyncHandler(async (req, res) => {
-  // Returns the authenticated user's cart with populated products
-  // and a computed total amount (price * quantity).
   const userId = req.user?._id;
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
   if (!cart) {
-    throw new ApiError(404, "Cart not found");
+    return res.status(200).json({ success: true, cart: null, totalAmount: 0, items: [] });
   }
-  const totalAmount = cart.items.reduce((sum, item) => {
-    const price = Number(item.product?.price) || 0;
+
+  // Filter out items where product no longer exists
+  const validItems = cart.items.filter(item => item.product != null);
+  
+  const totalAmount = validItems.reduce((sum, item) => {
+    const price = Number(item.product.price) || 0;
     const qty = Number(item.quantity) || 0;
     return sum + price * qty;
   }, 0);
+
+  // Update cart if invalid items were found
+  if (validItems.length !== cart.items.length) {
+    cart.items = validItems;
+    await cart.save();
+  }
+
   res.status(200).json({ success: true, cart, totalAmount });
 });
 

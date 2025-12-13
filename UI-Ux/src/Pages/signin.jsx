@@ -70,7 +70,7 @@ const SignIn = () => {
           
           <input
             type="text"
-            placeholder="Email or username"
+            placeholder="Email or Username"
             value={emailOrUsername}
             onChange={(e) => setEmailOrUsername(e.target.value)}
             autoComplete="username"
