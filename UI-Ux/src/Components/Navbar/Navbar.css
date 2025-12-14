@@ -32,6 +32,24 @@ nav {
   color: #ea1538;
 }
 
+/* Wishlist icon styling */
+.wishlist-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wishlist-icon {
+  font-size: 24px;
+  color: #ea1538;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.wishlist-icon:hover {
+  transform: scale(1.1);
+  color: #ff1a47;
+}
+
 /* Active route highlight */
 .nav-links li a.active {
   color: #ea1538;

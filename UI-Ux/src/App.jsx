@@ -12,6 +12,7 @@ import PrivateRoute from './utils/PrivateRoute';
 import ForgotPassword from './Pages/ForgotPassword';
 import ChangePassword from './Pages/ChangePassword';
 import UpdateDetails from './Pages/UpdateDetails';
+import Wishlist from './Pages/Wishlist';
 import { useCartStore } from './Pages/cartStore';
 
 function App() {
@@ -82,6 +83,14 @@ function AppContent() {
           element={
             <PrivateRoute>
               <PaymentPage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/wishlist" 
+          element={
+            <PrivateRoute>
+              <Wishlist />
             </PrivateRoute>
           } 
         />

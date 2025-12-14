@@ -243,6 +243,73 @@ const forgotPassword = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "Password reset successfully"));
 });
 
+const addToWishlist = asyncHandler(async(req, res) => {
+  const { productId } = req.body;
+  
+  if(!productId) {
+    throw new ApiError(400, "Product ID is required");
+  }
+  
+  const user = await User.findById(req.user?._id);
+  
+  // Check if product already exists in wishlist
+  const existsInWishlist = user.wishlist.some(
+    item => item.productId.toString() === productId
+  );
+  
+  if(existsInWishlist) {
+    throw new ApiError(400, "Product already in wishlist");
+  }
+  
+  user.wishlist.push({
+    productId,
+    addedAt: new Date()
+  });
+  
+  await user.save({ validateBeforeSave: false });
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.wishlist, "Product added to wishlist successfully"));
+});
+
+const removeFromWishlist = asyncHandler(async(req, res) => {
+  const { productId } = req.body;
+  
+  if(!productId) {
+    throw new ApiError(400, "Product ID is required");
+  }
+  
+  const user = await User.findById(req.user?._id);
+  
+  user.wishlist = user.wishlist.filter(
+    item => item.productId.toString() !== productId
+  );
+  
+  await user.save({ validateBeforeSave: false });
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.wishlist, "Product removed from wishlist successfully"));
+});
+
+const getWishlist = asyncHandler(async(req, res) => {
+  const user = await User.findById(req.user?._id)
+    .populate({
+      path: 'wishlist.productId',
+      select: 'name price image images description category stock',
+      populate: {
+        path: 'category',
+        select: 'name'
+      }
+    })
+    .select('wishlist');
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.wishlist, "Wishlist fetched successfully"));
+});
+
 // Add this temporary debug endpoint
 const debugUser = asyncHandler(async (req, res) => {
   const { email } = req.query;
@@ -274,5 +341,8 @@ export {
   getCurrentUser,
   updateAccountDetails,
   forgotPassword,
-  debugUser // Add this
+  addToWishlist,
+  removeFromWishlist,
+  getWishlist,
+  debugUser
 }

@@ -19,3 +19,18 @@ export const updateAccountDetails = async (username, email) => {
   const res = await axios.put('/users/update-account', { username, email });
   return res.data;
 };
+
+export const getWishlist = async () => {
+  const res = await axios.get('/users/wishlist');
+  return res.data?.data || [];
+};
+
+export const addToWishlist = async (productId) => {
+  const res = await axios.post('/users/wishlist/add', { productId });
+  return res.data;
+};
+
+export const removeFromWishlist = async (productId) => {
+  const res = await axios.post('/users/wishlist/remove', { productId });
+  return res.data;
+};

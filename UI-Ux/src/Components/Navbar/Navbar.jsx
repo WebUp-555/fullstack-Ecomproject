@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaSignInAlt } from "react-icons/fa";
+import { FaSignInAlt, FaHeart } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 
@@ -54,6 +54,13 @@ const Navbar = () => {
         <li><a href="/#about">About</a></li>
         <li><a href="/#services">Service</a></li>
         <li><a href="/#contact">Contact Us</a></li>
+        {isLoggedIn && (
+          <li>
+            <Link to="/wishlist" aria-label="View wishlist" className="wishlist-link">
+              <FaHeart className="wishlist-icon" />
+            </Link>
+          </li>
+        )}
         <li>
           <Link to="/cart" aria-label="View cart">
             <img

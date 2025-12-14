@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from "react";
+﻿import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProductById } from "../Api/catalogApi";
+import { getProductById, addToWishlist, removeFromWishlist, getWishlist } from "../Api/catalogApi";
 import { useCartStore } from "./cartStore";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 // Build a stable origin (strip trailing /api/v1 if present)
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
@@ -34,6 +35,8 @@ export default function ProductsDetails() {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const { addToCart, error: cartError, clearError } = useCartStore();
 
@@ -45,6 +48,20 @@ export default function ProductsDetails() {
           setNotFound(true);
         }
         setProduct(p);
+        
+        // Check if product is in wishlist
+        const token = localStorage.getItem('token');
+        if (token && p) {
+          try {
+            const wishlist = await getWishlist();
+            const inWishlist = wishlist.some(item => 
+              item.productId?._id === id || item.productId === id
+            );
+            setIsInWishlist(inWishlist);
+          } catch (err) {
+            console.error('Failed to load wishlist:', err);
+          }
+        }
       } catch (e) {
         // Distinguish 404
         if (e.status === 404) setNotFound(true);
@@ -98,6 +115,31 @@ export default function ProductsDetails() {
     }
   };
 
+  const handleWishlistToggle = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin?redirect=/product/' + id);
+      return;
+    }
+
+    setWishlistLoading(true);
+    try {
+      if (isInWishlist) {
+        await removeFromWishlist(id);
+        setIsInWishlist(false);
+        setSuccessMessage("Removed from wishlist");
+      } else {
+        await addToWishlist(id);
+        setIsInWishlist(true);
+        setSuccessMessage("Added to wishlist");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update wishlist");
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
   if (error && !notFound) return <div className="p-6 text-red-500">{error}</div>;
   if (notFound) return <div className="p-6 text-white">Product not found.</div>;
   if (!product) return <div className="p-6 text-white">Loading...</div>;
@@ -138,21 +180,35 @@ export default function ProductsDetails() {
 
           {/* Details Section */}
           <div className="text-white space-y-6">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {product.name}
-              </h1>
-              {product.category && (
-                <p className="text-red-400 text-sm mt-2 font-semibold tracking-wide">
-                  {product.category.name || product.category}
-                </p>
-              )}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  {product.name}
+                </h1>
+                {product.category && (
+                  <p className="text-red-400 text-sm mt-2 font-semibold tracking-wide">
+                    {product.category.name || product.category}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                className="ml-4 p-3 bg-zinc-800 rounded-full hover:bg-zinc-700 transition-all duration-300 disabled:opacity-50"
+                aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                {isInWishlist ? (
+                  <FaHeart className="text-red-500 text-2xl" />
+                ) : (
+                  <FaRegHeart className="text-gray-400 text-2xl hover:text-red-400" />
+                )}
+              </button>
             </div>
 
             {product.price && (
               <div className="bg-zinc-800 rounded-xl p-4 inline-block shadow-lg">
                 <p className="text-3xl font-bold text-red-400">
-                  ₹{product.price.toLocaleString()}
+                  â‚¹{product.price.toLocaleString()}
                 </p>
               </div>
             )}
@@ -186,7 +242,7 @@ export default function ProductsDetails() {
                     disabled={quantity <= 1}
                     className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    −
+                    âˆ’
                   </button>
                   <span className="px-4 font-semibold">{quantity}</span>
                   <button
