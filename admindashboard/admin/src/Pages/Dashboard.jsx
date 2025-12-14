@@ -20,7 +20,7 @@ export default function Dashboard() {
 
         // Fetch products, users, and orders in parallel
         const [productsRes, usersRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/products`),
+          axios.get(`${API_BASE_URL}/products`,{ headers }),
           axios.get(`${API_BASE_URL}/admin/users`, { headers })
         ]);
 
