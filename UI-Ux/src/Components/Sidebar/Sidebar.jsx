@@ -16,6 +16,11 @@ const Sidebar = () => {
     setIsOpen(false);
   };
 
+  const handleUpdateDetails = () => {
+    navigate('/update-details');
+    setIsOpen(false);
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -62,6 +67,10 @@ const Sidebar = () => {
           <h2>Account Settings</h2>
           
           <ul className="sidebar-menu">
+            <li onClick={handleUpdateDetails}>
+              <span className="icon">👤</span>
+              Update Details
+            </li>
             <li onClick={handleChangePassword}>
               <span className="icon">🔒</span>
               Change Password

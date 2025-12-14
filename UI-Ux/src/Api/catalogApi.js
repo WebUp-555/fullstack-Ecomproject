@@ -14,3 +14,8 @@ export const getCategories = async () => {
   const res = await axios.get('/categories');
   return res.data?.categories || res.data?.data?.categories || [];
 };
+
+export const updateAccountDetails = async (username, email) => {
+  const res = await axios.put('/users/update-account', { username, email });
+  return res.data;
+};

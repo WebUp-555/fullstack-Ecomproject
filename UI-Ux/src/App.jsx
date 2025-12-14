@@ -11,6 +11,7 @@ import PaymentPage from './Pages/PaymentPage';
 import PrivateRoute from './utils/PrivateRoute';
 import ForgotPassword from './Pages/ForgotPassword';
 import ChangePassword from './Pages/ChangePassword';
+import UpdateDetails from './Pages/UpdateDetails';
 import { useCartStore } from './Pages/cartStore';
 
 function App() {
@@ -41,6 +42,7 @@ function AppContent() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/update-details" element={<UpdateDetails />} />
         
         {/* Protected Routes */}
         <Route 
