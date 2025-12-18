@@ -3,8 +3,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
+import { PendingSignup } from "../models/pendingSignup.model.js";
 import e from "express";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/mailer.js";
+
+const generate4DigitCode = () => Math.floor(1000 + Math.random() * 9000).toString();
+const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * 60000);
 
 const generateAccessTokenAndRefreshToken = async(userId) => {
   try {
@@ -24,33 +29,43 @@ const generateAccessTokenAndRefreshToken = async(userId) => {
 const register = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  if([username, email, password].some((field) => field?.trim() === "")) {
+  if ([username, email, password].some((field) => !field || field.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existeduser = await User.findOne({
-    $or: [{ username }, { email }]
-  });
-
-  if(existeduser) {
+  const existedUser = await User.findOne({ $or: [{ username }, { email }] });
+  if (existedUser) {
     throw new ApiError(409, "User with email or username already exists");
   }
 
-  const user = await User.create({
-    username: username.toLowerCase(),
-    email,
-    password
-  });
-  
-  const createdUser = await User.findById(user._id).select("-password -refreshToken -__v");
+  const code = generate4DigitCode();
+  const expires = addMinutes(new Date(), 10);
 
-  if(!createdUser) {
-    throw new ApiError(500, "Something went wrong while registering the user");
+  await PendingSignup.findOneAndUpdate(
+    { email: email.toLowerCase() },
+    {
+      username: username.toLowerCase(),
+      email: email.toLowerCase(),
+      password, // User model will hash on final creation
+      code,
+      expiresAt: expires,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  try {
+    await sendEmail(
+      email,
+      "Your verification code",
+      `<p>Your verification code is <b>${code}</b>. It expires in 10 minutes.</p>`
+    );
+  } catch (e) {
+    console.error("Failed to send verification email:", e?.message);
   }
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"));
+  return res.status(201).json(
+    new ApiResponse(201, { email, otpSent: true }, "Verification code sent to email. Complete verification to activate your account.")
+  );
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -67,6 +82,11 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne(query);
   if (!user) {
     throw new ApiError(404, "User does not exist");
+  }
+
+  // Require verification for all users (legacy and new)
+  if (!user.isEmailVerified) {
+    throw new ApiError(403, "Email not verified. Please verify using the 4-digit code sent to your email.");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -223,24 +243,112 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
-const forgotPassword = asyncHandler(async(req, res) => {
-  const { email, newPassword } = req.body;
-  
-  if(!email || !newPassword) {
-    throw new ApiError(400, "Email and new password are required");
-  }
-  
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new ApiError(400, "Email is required");
+
   const user = await User.findOne({ email });
-  if(!user) {
-    throw new ApiError(404, "User not found with this email");
-  }
-  
-  user.password = newPassword;
+  if (!user) throw new ApiError(404, "User not found with this email");
+
+  const code = generate4DigitCode();
+  user.passwordResetCode = code;
+  user.passwordResetCodeExpires = addMinutes(new Date(), 10);
   await user.save({ validateBeforeSave: false });
-  
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Password reset successfully"));
+
+  try {
+    await sendEmail(
+      email,
+      "Your password reset code",
+      `<p>Your password reset code is <b>${code}</b>. It expires in 10 minutes.</p>`
+    );
+  } catch (e) {
+    console.error("Failed to send reset email:", e?.message);
+  }
+
+  return res.status(200).json(new ApiResponse(200, { email, otpSent: true }, "Reset code sent to email"));
+});
+
+const verifyEmailCode = asyncHandler(async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) throw new ApiError(400, "Email and code are required");
+
+  const pending = await PendingSignup.findOne({ email: email.toLowerCase() });
+  if (!pending) {
+    throw new ApiError(404, "No pending signup found for this email. Please register again.");
+  }
+
+  if (pending.code !== code || !pending.expiresAt || new Date(pending.expiresAt) < new Date()) {
+    throw new ApiError(400, "Invalid or expired verification code");
+  }
+
+  const existedUser = await User.findOne({ $or: [{ email: pending.email }, { username: pending.username }] });
+  if (existedUser) {
+    throw new ApiError(409, "User with email or username already exists");
+  }
+
+  await User.create({
+    username: pending.username,
+    email: pending.email,
+    password: pending.password,
+    isEmailVerified: true,
+  });
+
+  await PendingSignup.deleteOne({ _id: pending._id });
+
+  return res.status(200).json(new ApiResponse(200, {}, "Email verified successfully. You can now sign in."));
+});
+
+const resendSignupCode = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new ApiError(400, "Email is required");
+
+  const pending = await PendingSignup.findOne({ email: email.toLowerCase() });
+  if (!pending) throw new ApiError(404, "No pending signup found for this email. Please register again.");
+
+  const code = generate4DigitCode();
+  const expires = addMinutes(new Date(), 10);
+
+  pending.code = code;
+  pending.expiresAt = expires;
+  await pending.save({ validateBeforeSave: false });
+
+  try {
+    await sendEmail(
+      email,
+      "Your new verification code",
+      `<p>Your verification code is <b>${code}</b>. It expires in 10 minutes.</p>`
+    );
+  } catch (e) {
+    console.error("Failed to resend verification email:", e?.message);
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "Verification code resent"));
+});
+
+const verifyResetCode = asyncHandler(async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  if (!email || !code || !newPassword) {
+    throw new ApiError(400, "Email, code and new password are required");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (
+    !user.passwordResetCode ||
+    user.passwordResetCode !== code ||
+    !user.passwordResetCodeExpires ||
+    new Date(user.passwordResetCodeExpires) < new Date()
+  ) {
+    throw new ApiError(400, "Invalid or expired reset code");
+  }
+
+  user.password = newPassword;
+  user.passwordResetCode = undefined;
+  user.passwordResetCodeExpires = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, {}, "Password reset successfully"));
 });
 
 const addToWishlist = asyncHandler(async(req, res) => {
@@ -341,6 +449,9 @@ export {
   getCurrentUser,
   updateAccountDetails,
   forgotPassword,
+  verifyEmailCode,
+  verifyResetCode,
+  resendSignupCode,
   addToWishlist,
   removeFromWishlist,
   getWishlist,

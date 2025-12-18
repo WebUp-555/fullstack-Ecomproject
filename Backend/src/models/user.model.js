@@ -24,6 +24,22 @@ const userSchema=new Schema({
         type:String,
         required:true
     },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationCode: {
+        type: String
+    },
+    emailVerificationCodeExpires: {
+        type: Date
+    },
+    passwordResetCode: {
+        type: String
+    },
+    passwordResetCodeExpires: {
+        type: Date
+    },
     role:{
         type:String,
         enum:["user","admin"],

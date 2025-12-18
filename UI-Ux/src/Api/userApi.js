@@ -38,3 +38,23 @@ export const logoutUser = async () => {
     throw error;
   }
 };
+
+export const verifyEmailCode = async (email, code) => {
+  const res = await api.post("/users/verify-email", { email, code });
+  return res.data;
+};
+
+export const resendSignupCode = async (email) => {
+  const res = await api.post("/users/register/resend-code", { email });
+  return res.data;
+};
+
+export const sendForgotCode = async (email) => {
+  const res = await api.post("/users/forgot-password", { email });
+  return res.data;
+};
+
+export const resetPasswordWithCode = async (email, code, newPassword) => {
+  const res = await api.post("/users/reset-password", { email, code, newPassword });
+  return res.data;
+};
