@@ -49,18 +49,29 @@ export default function ProductsDetails() {
         }
         setProduct(p);
         
-        // Check if product is in wishlist
+        // Check if product is in wishlist (with retry for fresh login)
         const token = localStorage.getItem('token');
         if (token && p) {
-          try {
-            const wishlist = await getWishlist();
-            const inWishlist = wishlist.some(item => 
-              item.productId?._id === id || item.productId === id
-            );
-            setIsInWishlist(inWishlist);
-          } catch (err) {
-            console.error('Failed to load wishlist:', err);
-          }
+          const fetchWishlistWithRetry = async (retries = 2, delay = 500) => {
+            for (let i = 0; i <= retries; i++) {
+              try {
+                const wishlist = await getWishlist();
+                const inWishlist = wishlist.some(item => 
+                  item.productId?._id === id || item.productId === id
+                );
+                setIsInWishlist(inWishlist);
+                return; // Success, exit
+              } catch (err) {
+                // If unauthorized and we have retries left, wait and retry
+                if (err.status === 401 && i < retries) {
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                } else if (i === retries) {
+                  console.error('Failed to load wishlist after retries:', err);
+                }
+              }
+            }
+          };
+          await fetchWishlistWithRetry();
         }
       } catch (e) {
         // Distinguish 404

@@ -7,16 +7,36 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Add interceptor for debugging
+// Add interceptor to attach Authorization token from localStorage
 api.interceptors.request.use((request) => {
+  // Get token from localStorage and attach to every request
+  const token = localStorage.getItem('token');
+  if (token) {
+    request.headers.Authorization = `Bearer ${token}`;
+  }
+  
   console.log("FINAL URL:", (request.baseURL || "") + request.url);
   return request;
 });
 
-// Add interceptor to handle errors
+// Add interceptor to handle errors and retry on 401
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If 401 error and not already retried, try once more with fresh token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Re-read token from localStorage (might have been updated)
+      const freshToken = localStorage.getItem('token');
+      if (freshToken) {
+        originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+        return api(originalRequest);
+      }
+    }
+    
     console.log("API Error Details:", error);
     const errorMessage =
       error.response?.data?.message ||

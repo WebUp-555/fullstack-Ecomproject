@@ -60,12 +60,23 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  // Initialize cart on app start
+  // Initialize cart on app start (only if user is logged in)
   initializeCart: async () => {
     const { initialized } = get();
-    if (!initialized) {
+    const token = localStorage.getItem('token');
+    
+    // Only fetch cart if user is logged in and not already initialized
+    if (!initialized && token) {
       await get().fetchCart();
+    } else if (!token) {
+      set({ initialized: true }); // Mark as initialized even without fetching
     }
+  },
+
+  // Re-initialize cart after fresh login
+  reinitializeAfterLogin: async () => {
+    set({ initialized: false, cartItems: [], totalAmount: 0, error: null });
+    await get().fetchCart();
   },
 
   // Add to cart (adds quantity to existing)

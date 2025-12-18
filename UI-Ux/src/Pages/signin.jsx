@@ -45,6 +45,10 @@ const SignIn = () => {
         // Only store for regular users
         localStorage.setItem('token', accessToken);
         localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Dispatch custom event to notify components that auth is ready
+        window.dispatchEvent(new CustomEvent('auth-ready', { detail: { token: accessToken } }));
+        
         navigate('/', { replace: true });
       }
     } catch (err) {

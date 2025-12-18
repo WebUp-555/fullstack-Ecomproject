@@ -17,10 +17,22 @@ import { useCartStore } from './Pages/cartStore';
 
 function App() {
   const initializeCart = useCartStore((state) => state.initializeCart);
+  const reinitializeAfterLogin = useCartStore((state) => state.reinitializeAfterLogin);
 
   useEffect(() => {
     initializeCart();
-  }, [initializeCart]);
+    
+    // Listen for auth-ready event (dispatched after login)
+    const handleAuthReady = () => {
+      // Small delay to ensure localStorage is fully committed
+      setTimeout(() => {
+        reinitializeAfterLogin();
+      }, 100);
+    };
+    
+    window.addEventListener('auth-ready', handleAuthReady);
+    return () => window.removeEventListener('auth-ready', handleAuthReady);
+  }, [initializeCart, reinitializeAfterLogin]);
 
   return (
     <BrowserRouter>
