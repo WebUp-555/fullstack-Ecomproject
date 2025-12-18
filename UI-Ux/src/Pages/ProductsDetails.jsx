@@ -208,7 +208,7 @@ export default function ProductsDetails() {
             {product.price && (
               <div className="bg-zinc-800 rounded-xl p-4 inline-block shadow-lg">
                 <p className="text-3xl font-bold text-red-400">
-                  â‚¹{product.price.toLocaleString()}
+                  ₹{product.price.toLocaleString()}
                 </p>
               </div>
             )}
@@ -242,7 +242,7 @@ export default function ProductsDetails() {
                     disabled={quantity <= 1}
                     className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    âˆ’
+                    −
                   </button>
                   <span className="px-4 font-semibold">{quantity}</span>
                   <button
