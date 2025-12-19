@@ -13,6 +13,9 @@ import ForgotPassword from './Pages/ForgotPassword';
 import ChangePassword from './Pages/ChangePassword';
 import UpdateDetails from './Pages/UpdateDetails';
 import Wishlist from './Pages/Wishlist';
+import CustomTShirts from './Pages/CustomTShirts';
+import BulkOrders from './Pages/BulkOrders';
+import ArtistCollaborations from './Pages/ArtistCollaborations';
 import { useCartStore } from './Pages/cartStore';
 
 function App() {
@@ -63,6 +66,30 @@ function AppContent() {
           element={
             <PrivateRoute>
               <Home />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/services/custom-tshirts" 
+          element={
+            <PrivateRoute>
+              <CustomTShirts />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/services/bulk-orders" 
+          element={
+            <PrivateRoute>
+              <BulkOrders />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/services/artist-collaborations" 
+          element={
+            <PrivateRoute>
+              <ArtistCollaborations />
             </PrivateRoute>
           } 
         />

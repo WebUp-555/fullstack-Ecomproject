@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaSignInAlt, FaHeart } from "react-icons/fa";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 
 import "./Navbar.css";
@@ -10,7 +10,30 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
+
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    
+    // If we're not on the home page, navigate there first
+    if (location.pathname !== '/') {
+      navigate('/');
+      // Wait for navigation to complete, then scroll
+      setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      // Already on home page, just scroll
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
 
   useEffect(() => {
     // Check if user is logged in
@@ -51,9 +74,9 @@ const Navbar = () => {
       <ul className="nav-links">
         <li><Link to="/" className={isActive("/") ? "active" : ""}>Home</Link></li>
         <li><Link to="/products" className={isActive("/products") ? "active" : ""}>Products</Link></li>
-        <li><a href="/#about">About</a></li>
-        <li><a href="/#services">Service</a></li>
-        <li><a href="/#contact">Contact Us</a></li>
+        <li><a href="/#about" onClick={(e) => handleSmoothScroll(e, 'about')}>About</a></li>
+        <li><a href="/#services" onClick={(e) => handleSmoothScroll(e, 'services')}>Service</a></li>
+        <li><a href="/#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>Contact Us</a></li>
         {isLoggedIn && (
           <li>
             <Link to="/wishlist" aria-label="View wishlist" className="wishlist-link">

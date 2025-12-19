@@ -2,57 +2,81 @@ import React from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
+import { Link } from "react-router-dom";
 import './Carousel.css';
 
 function AdaptiveHeight() {
   const settings = {
-    className: "h-auto",
+    className: "carousel-slider",
     dots: true,
     infinite: true,
     slidesToShow: 1,
     slidesToScroll: 1,
-    adaptiveHeight: true,
+    adaptiveHeight: false,
     autoplay: true,
-    speed: 500,
-    autoplaySpeed: 3000,
+    speed: 800,
+    autoplaySpeed: 5000,
     arrows: false,
+    fade: true,
+    cssEase: 'cubic-bezier(0.7, 0, 0.3, 1)',
     appendDots: dots => (
-      <div style={{ bottom: '10px' }}>
-        <ul style={{ margin: "0px", display: "flex", justifyContent: "center" }}> {dots} </ul>
+      <div className="custom-dots">
+        <ul> {dots} </ul>
       </div>
     ),
     customPaging: i => (
-      <div
-        style={{
-          width: "12px",
-          height: "12px",
-          borderRadius: "50%",
-          background: "#ea1538",
-          opacity: 0.7,
-          margin: "0 4px"
-        }}
-      />
+      <div className="custom-dot" />
     )
   };
 
+  const slides = [
+    {
+      image: '/b1.png',
+      title: 'Fashion Style',
+      subtitle: 'JAPANEE',
+      discount: '50% Off',
+      cta: 'Buy Now',
+      link: '/products'
+    },
+    {
+      image: '/ro.jpg',
+      title: 'Limited Edition',
+      subtitle: 'Anime Collection',
+      discount: 'New Drop',
+      cta: 'Shop Now',
+      link: '/products'
+    }
+  ];
+
   return (
-    <div className="slider-container bg-gray-900 rounded-xl shadow-lg mx-auto my-6 px-2 md:px-10 max-w-5xl">
+    <div className="carousel-wrapper">
       <Slider {...settings}>
-        
-        <div>
-          <img
-            src="/b1.png"
-            alt="Banner 1"
-            className="w-full h-[220px] md:h-[400px] object-cover rounded-xl"
-          />
-        </div>
-        <div>
-          <img
-            src="/ro.jpg"
-            alt="Promo"
-            className="w-full h-[220px] md:h-[400px] object-cover rounded-xl"
-          />
-        </div>
+        {slides.map((slide, index) => (
+          <div key={index} className="carousel-slide">
+            <div className="carousel-content-wrapper">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="carousel-image"
+              />
+              <div className="carousel-overlay">
+                <div className="carousel-text-content">
+                  <div className="carousel-badge">
+                    <span className="discount-text">Discount</span>
+                    <span className="discount-value">{slide.discount}</span>
+                  </div>
+                  <p className="carousel-subtitle">{slide.subtitle}</p>
+                  <h1 className="carousel-title">{slide.title}</h1>
+                  <Link to={slide.link}>
+                    <button className="carousel-cta">
+                      {slide.cta}
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </Slider>
     </div>
   );
