@@ -28,7 +28,8 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
 });
 
 export const requireAdmin = (req, _, next) => {
-  if (!req.user || req.user.role !== "admin") {
+  const role = (req.user?.role || "").trim().toLowerCase();
+  if (role !== "admin") {
     throw new ApiError(403, "Forbidden: Admins only");
   }
   next();

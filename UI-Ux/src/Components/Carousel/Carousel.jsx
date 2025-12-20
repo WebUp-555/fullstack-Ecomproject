@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { Link } from "react-router-dom";
 import './Carousel.css';
+import { getBanners } from "../../Api/catalogApi";
+import { buildAssetUrl } from "../../utils/imageUrl";
 
 function AdaptiveHeight() {
   const settings = {
@@ -29,24 +31,64 @@ function AdaptiveHeight() {
     )
   };
 
-  const slides = [
+  const fallbackSlides = [
     {
       image: '/b1.png',
-      title: 'Fashion Style',
-      subtitle: 'JAPANEE',
-      discount: '50% Off',
-      cta: 'Buy Now',
+      title: 'Street Anime Tee',
+      subtitle: 'Graphic lineup',
+      discount: 'New Drop',
+      cta: 'Shop Now',
       link: '/products'
     },
     {
       image: '/ro.jpg',
-      title: 'Limited Edition',
-      subtitle: 'Anime Collection',
-      discount: 'New Drop',
-      cta: 'Shop Now',
+      title: 'Rogue Ronin Tee',
+      subtitle: 'Brush art print',
+      discount: 'Limited',
+      cta: 'Grab One',
       link: '/products'
     }
   ];
+
+  const [slides, setSlides] = useState(fallbackSlides);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBanners = async () => {
+      try {
+        const banners = await getBanners();
+        if (!isMounted) return;
+
+        const normalized = (banners || [])
+          .filter(Boolean)
+          .map((banner) => ({
+            image: buildAssetUrl(banner.image) || banner.image,
+            title: banner.title || 'Anime Drop',
+            subtitle: banner.subtitle || '',
+            discount: banner.badge || 'Featured',
+            cta: banner.ctaText || 'Shop Now',
+            link: banner.ctaLink || '/products'
+          }))
+          .filter((banner) => banner.image);
+
+        setSlides(normalized.length ? normalized : fallbackSlides);
+      } catch (error) {
+        console.error('Failed to load banners', error);
+        setSlides(fallbackSlides);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadBanners();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="carousel-wrapper">

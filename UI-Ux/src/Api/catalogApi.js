@@ -34,3 +34,8 @@ export const removeFromWishlist = async (productId) => {
   const res = await axios.post('/users/wishlist/remove', { productId });
   return res.data;
 };
+
+export const getBanners = async () => {
+  const res = await axios.get('/banners');
+  return res.data?.banners || res.data?.data?.banners || [];
+};

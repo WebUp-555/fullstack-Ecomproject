@@ -29,3 +29,19 @@ export function debugImage(product) {
     keys: Object.keys(product)
   });
 }
+
+// Generic helper to build absolute URL for any asset path or absolute URL
+export function buildAssetUrl(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+  const ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, "");
+  const clean = path.startsWith('/') ? path.slice(1) : path;
+
+  try {
+    return new URL(clean, ORIGIN + '/').toString();
+  } catch (_) {
+    return `${ORIGIN}/${clean}`;
+  }
+}

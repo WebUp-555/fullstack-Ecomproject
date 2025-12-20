@@ -117,4 +117,29 @@ export const updateOrderStatus = async (id, status) => {
   return response.data;
 };
 
+// ============ BANNER APIs ============
+export const getAllBanners = async () => {
+  const response = await api.get('/admin/banners');
+  return response.data;
+};
+
+export const addBanner = async (formData) => {
+  const response = await api.post('/admin/banners', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const updateBanner = async (id, formData) => {
+  const response = await api.put(`/admin/banners/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const deleteBanner = async (id) => {
+  const response = await api.delete(`/admin/banners/${id}`);
+  return response.data;
+};
+
 export default api;

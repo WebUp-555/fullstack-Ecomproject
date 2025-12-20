@@ -37,6 +37,7 @@ const Sidebar = () => {
   const menuItems = [
     { path: '/', label: 'Dashboard' },
     { path: '/products', label: 'Products' },
+    { path: '/banners', label: 'Banners' },
     { path: '/add-product', label: 'Add Product' },
     { path: '/add-category', label: 'Add Category' }, // <-- Add this line
     { path: '/users', label: 'Users'},

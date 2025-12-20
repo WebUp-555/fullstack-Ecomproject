@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyJWT, requireAdmin } from "../middlewares/auth.middleware.js";
-import { adminLogin, adminLogout, getAllUsers, getUserById, addProduct, addCategory, deleteProduct, deleteUserById, getAllCategories, getProductById, getAllProducts,  updateProduct } from "../controllers/admin.controller.js";
+import { adminLogin, adminLogout, getAllUsers, getUserById, addProduct, addCategory, deleteProduct, deleteUserById, getAllCategories, getProductById, getAllProducts, updateProduct, createBanner, getAllBanners, updateBanner, deleteBanner } from "../controllers/admin.controller.js";
 
 import multer from "multer";
 import { upload as cloudinaryUpload } from "../middlewares/cloudinary.middleware.js";
@@ -27,5 +27,11 @@ router.delete("/deleteproduct/:id", verifyJWT, requireAdmin, deleteProduct);
 // ============ CATEGORY ROUTES ============
 router.post("/addcategory", verifyJWT, requireAdmin, addCategory);
 router.get("/categories", verifyJWT, requireAdmin, getAllCategories);
+
+// ============ BANNER ROUTES ============
+router.get("/banners", verifyJWT, requireAdmin, getAllBanners);
+router.post("/banners", verifyJWT, requireAdmin, upload.single("image"), createBanner);
+router.put("/banners/:id", verifyJWT, requireAdmin, upload.single("image"), updateBanner);
+router.delete("/banners/:id", verifyJWT, requireAdmin, deleteBanner);
 
 export default router;

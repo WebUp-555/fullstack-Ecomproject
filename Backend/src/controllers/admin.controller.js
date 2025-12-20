@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { Product } from "../models/products.model.js";
 import { Category } from "../models/category.model.js";
-import {Cart} from "../models/addToCart.model.js";
+import { Cart } from "../models/addToCart.model.js";
+import { Banner } from "../models/banner.model.js";
 
 import mongoose from "mongoose";
 
@@ -211,6 +212,96 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 
   res.json({ success: true, product: updatedProduct });
+});
+
+// 🎞️ Create a banner (admin)
+export const createBanner = asyncHandler(async (req, res) => {
+  const { title, subtitle, badge, ctaText, ctaLink, order, active } = req.body;
+
+  if (!title) {
+    throw new ApiError(400, "Title is required");
+  }
+
+  let image = null;
+  if (req.file?.secure_url) {
+    image = req.file.secure_url;
+  } else if (req.file?.filename) {
+    image = `/uploads/${req.file.filename}`;
+  } else if (req.body.image) {
+    image = req.body.image;
+  }
+
+  if (!image) {
+    throw new ApiError(400, "Banner image is required");
+  }
+
+  const banner = await Banner.create({
+    title,
+    subtitle,
+    badge,
+    ctaText,
+    ctaLink,
+    image,
+    order: Number(order) || 0,
+    active: active === undefined ? true : active === "true" || active === true,
+  });
+
+  res.status(201).json({ success: true, banner });
+});
+
+// 📋 Get all banners (admin)
+export const getAllBanners = asyncHandler(async (_req, res) => {
+  const banners = await Banner.find().sort({ order: 1, createdAt: -1 }).lean();
+  res.json({ success: true, banners });
+});
+
+// 🏠 Get active banners (public)
+export const getActiveBanners = asyncHandler(async (_req, res) => {
+  const banners = await Banner.find({ active: true })
+    .sort({ order: 1, createdAt: -1 })
+    .lean();
+  res.json({ success: true, banners });
+});
+
+// ✏️ Update banner (admin)
+export const updateBanner = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, subtitle, badge, ctaText, ctaLink, order, active } = req.body;
+  const updateData = {};
+
+  if (title) updateData.title = title;
+  if (subtitle !== undefined) updateData.subtitle = subtitle;
+  if (badge !== undefined) updateData.badge = badge;
+  if (ctaText !== undefined) updateData.ctaText = ctaText;
+  if (ctaLink !== undefined) updateData.ctaLink = ctaLink;
+  if (order !== undefined) updateData.order = Number(order) || 0;
+  if (active !== undefined) updateData.active = active === "true" || active === true;
+
+  if (req.file?.secure_url) {
+    updateData.image = req.file.secure_url;
+  } else if (req.file?.filename) {
+    updateData.image = `/uploads/${req.file.filename}`;
+  } else if (req.body.image) {
+    updateData.image = req.body.image;
+  }
+
+  const banner = await Banner.findByIdAndUpdate(id, updateData, { new: true });
+  if (!banner) {
+    throw new ApiError(404, "Banner not found");
+  }
+
+  res.json({ success: true, banner });
+});
+
+// 🗑️ Delete banner (admin)
+export const deleteBanner = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const banner = await Banner.findByIdAndDelete(id);
+  if (!banner) {
+    throw new ApiError(404, "Banner not found");
+  }
+
+  res.json({ success: true, message: "Banner deleted successfully" });
 });
 
 
